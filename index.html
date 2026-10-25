@@ -178,7 +178,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
     </section>
     <section>
       <h2>Silicon or carbon</h2>
-      <p>Each stack is one element, all silicon or all carbon. Both crystallise as diamond, in layers that sit on A, B or C sites. Left alone they repeat A B C, but a layer on another site, a stacking fault, is a known defect in both, and both have hexagonal forms stacked A B A B. Here every bit is a deliberate choice of site. The panel's figures use each element's own spacing: silicon 0.384 nm between atoms in a layer and 0.314 nm per layer, diamond 0.252 nm and 0.206 nm.</p>
+      <p>Each stack is one element, all silicon or all carbon. Both crystallise as diamond, in layers that sit on A, B or C sites. Left alone they repeat A B C, but a layer on another site, a stacking fault, is a known defect in both, and both have hexagonal forms stacked A B A B. Here every bit is a deliberate choice of site. The panel's figures use each element's own spacing: silicon 0.384 nm between atoms in a layer and 0.314 nm per layer, diamond 0.252 nm and 0.206 nm. Each ball stands for a pair of atoms, since both crystals hold two at every site. EB per cm³ is exabytes if stacks this size were packed side by side through a cubic centimetre.</p>
     </section>
     <section>
       <h2>Reading from the side</h2>
@@ -404,15 +404,21 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
   }
 
   function renderStats(bits, seq, perLayer) {
-    const A_NM = ELEMENT[element] / Math.SQRT2, LAYER_NM = ELEMENT[element] / Math.sqrt(3);
+    const a = ELEMENT[element], A_NM = a / Math.SQRT2, LAYER_NM = a / Math.sqrt(3);
+    // Each ball is a pair of atoms (the diamond lattice holds two at every site), and a site
+    // in one layer takes a³/4 of crystal. A bit is two layers: the bit and its spacer.
+    const bitsPerNm3 = 1 / (2 * perLayer * a ** 3 / 4);
     const rows = [
       ["element", element === "Si" ? "silicon" : "carbon"],
       ["bits", bits.length],
       ["layers", seq.length],
-      ["atoms", seq.length * perLayer],
+      ["atoms", (seq.length * perLayer * 2).toLocaleString("en")],
+      ["atoms per bit", 4 * perLayer],
       ["stack height", (seq.length * LAYER_NM).toFixed(2) + " nm"],
       ["patch width", ((2 * rings) * A_NM + A_NM).toFixed(2) + " nm"],
-      ["nm per bit", (2 * LAYER_NM).toFixed(3)]
+      ["nm per bit", (2 * LAYER_NM).toFixed(3)],
+      ["bits per µm", Math.round(1000 / (2 * LAYER_NM)).toLocaleString("en")],
+      ["EB per cm³", Math.round(bitsPerNm3 * 1e21 / 8 / 1e18).toLocaleString("en")]
     ];
     const dl = document.getElementById("stats");
     dl.textContent = "";

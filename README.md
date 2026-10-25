@@ -42,6 +42,18 @@ site. The page uses each element's own spacing, from its lattice constant a
 | silicon | 0.543 nm | 0.384 nm   | 0.314 nm  | 0.627 nm            |
 | carbon  | 0.357 nm | 0.252 nm   | 0.206 nm  | 0.412 nm            |
 
+Each ball on the page stands for a pair of atoms, since both crystals hold two at
+every site, so a bit costs four atoms for every ball in a layer: 28 with the
+seven of the drawing. Other ways of putting the density:
+
+| element | bits per µm | exabytes per cm³, 7 / 19 / 37 balls per layer |
+|---------|-------------|-----------------------------------------------|
+| silicon | 1,595       | 223 / 82 / 42                                 |
+| carbon  | 2,428       | 787 / 290 / 149                               |
+
+The volume figure assumes stacks of that size packed side by side through the
+crystal. For scale, DNA holds 2 bits per base pair, 0.34 nm apart: 0.17 nm per bit.
+
 ## Reading it from the side
 
 Seen from the cut side face, the three sites lie at three different positions
