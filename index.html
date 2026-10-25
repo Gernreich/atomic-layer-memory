@@ -95,7 +95,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
   <div class="main">
     <div class="stage" id="stage">
       <canvas id="view" aria-label="3D view of the stacked atomic layers"></canvas>
-      <div class="hint" id="hint">drag to turn · scroll or pinch to zoom</div>
+      <div class="hint" id="hint">drag to turn and tilt · shift-drag or twist to roll · scroll or pinch to zoom</div>
     </div>
 
     <div class="panel">
@@ -120,8 +120,13 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
       </div>
 
       <div class="field">
-        <label class="label" for="tilt">Tilt <span id="tiltv"></span></label>
-        <input type="range" id="tilt" min="-89" max="89" step="1" value="22">
+        <label class="label" for="tilt">Tilt, toward and away <span id="tiltv"></span></label>
+        <input type="range" id="tilt" min="-180" max="180" step="1" value="22">
+      </div>
+
+      <div class="field">
+        <label class="label" for="roll">Roll, clockwise <span id="rollv"></span></label>
+        <input type="range" id="roll" min="-180" max="180" step="1" value="0">
       </div>
 
       <div class="field">
@@ -198,26 +203,30 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(35, 4 / 3, 0.1, 500);
 
-  // Orbit: the camera circles the stack. Turn (az) 0 looks from +z, 90 from +x where the
-  // cantilever is; tilt (el) 0 is level, 89 looks straight down.
-  const turnIn = document.getElementById("turn"), tiltIn = document.getElementById("tilt");
+  // The camera stays put on +z and the stack turns in front of it, on all three axes:
+  // turn about the stack's own vertical, then tilt toward or away, then roll about the line of sight.
+  // Turn 90 brings the stack's +x face, where the cantilever is, round to the viewer; tilt 90 looks straight down.
+  const turnIn = document.getElementById("turn"), tiltIn = document.getElementById("tilt"), rollIn = document.getElementById("roll");
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const orbit = { az: 40, el: 22, zoom: 1, spin: !reduced };
+  const orbit = { az: 40, el: 22, roll: 0, zoom: 1, spin: !reduced };
+  const pivot = new THREE.Group();
+  pivot.rotation.order = "ZXY";
+  scene.add(pivot);
+  const R = Math.PI / 180;
   function place() {
-    const d = (span * 2.6 + 4) * orbit.zoom;
-    const a = orbit.az * Math.PI / 180, e = orbit.el * Math.PI / 180;
-    camera.position.set(d * Math.cos(e) * Math.sin(a), d * Math.sin(e), d * Math.cos(e) * Math.cos(a));
+    camera.position.set(0, 0, (span * 2.6 + 4) * orbit.zoom);
     camera.lookAt(0, 0, 0);
-    turnIn.value = Math.round(orbit.az);
-    tiltIn.value = Math.round(orbit.el);
-    document.getElementById("turnv").textContent = Math.round(orbit.az) + "°";
-    document.getElementById("tiltv").textContent = Math.round(orbit.el) + "°";
+    pivot.rotation.set(orbit.el * R, -orbit.az * R, -orbit.roll * R);
+    for (const [input, out, v] of [[turnIn, "turnv", orbit.az], [tiltIn, "tiltv", orbit.el], [rollIn, "rollv", orbit.roll]]) {
+      input.value = Math.round(v);
+      document.getElementById(out).textContent = Math.round(v) + "°";
+    }
   }
   const wrapAz = a => ((a + 180) % 360 + 360) % 360 - 180;
-  const clampEl = e => Math.max(-89, Math.min(89, e));
 
   const pointers = new Map();
-  let pinch0 = 0, zoom0 = 1;
+  let pinch0 = 0, zoom0 = 1, twist0 = null;
+  canvas.addEventListener("contextmenu", e => e.preventDefault());
   canvas.addEventListener("pointerdown", e => {
     canvas.setPointerCapture(e.pointerId);
     pointers.set(e.pointerId, [e.clientX, e.clientY]);
@@ -228,16 +237,21 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
     if (!pointers.has(e.pointerId)) return;
     const [x0, y0] = pointers.get(e.pointerId);
     pointers.set(e.pointerId, [e.clientX, e.clientY]);
-    if (pointers.size === 1) {
+    if (pointers.size === 1 && (e.shiftKey || e.buttons === 2)) {    // shift-drag or right-drag rolls
+      orbit.roll = wrapAz(orbit.roll + (e.clientX - x0) * 0.5);
+    } else if (pointers.size === 1) {
       orbit.az = wrapAz(orbit.az - (e.clientX - x0) * 0.5);
-      orbit.el = clampEl(orbit.el + (e.clientY - y0) * 0.4);
-    } else if (pointers.size === 2 && pinch0) {
+      orbit.el = wrapAz(orbit.el + (e.clientY - y0) * 0.5);
+    } else if (pointers.size === 2 && pinch0) {                       // pinch zooms, twist rolls
       const [p, q] = [...pointers.values()];
       orbit.zoom = Math.max(0.3, Math.min(3, zoom0 * pinch0 / Math.hypot(p[0] - q[0], p[1] - q[1])));
+      const ang = Math.atan2(q[1] - p[1], q[0] - p[0]) / R;
+      if (twist0 !== null) orbit.roll = wrapAz(orbit.roll + wrapAz(ang - twist0));
+      twist0 = ang;
     }
     place();
   });
-  const lift = e => { pointers.delete(e.pointerId); if (pointers.size < 2) pinch0 = 0; };
+  const lift = e => { pointers.delete(e.pointerId); if (pointers.size < 2) { pinch0 = 0; twist0 = null; } };
   canvas.addEventListener("pointerup", lift);
   canvas.addEventListener("pointercancel", lift);
   canvas.addEventListener("wheel", e => {
@@ -247,6 +261,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
   }, { passive: false });
   turnIn.addEventListener("input", () => { orbit.spin = false; orbit.az = +turnIn.value; place(); });
   tiltIn.addEventListener("input", () => { orbit.spin = false; orbit.el = +tiltIn.value; place(); });
+  rollIn.addEventListener("input", () => { orbit.spin = false; orbit.roll = +rollIn.value; place(); });
 
   scene.add(new THREE.HemisphereLight(0xffffff, 0x445066, 0.75));
   const sun = new THREE.DirectionalLight(0xffffff, 0.8);
@@ -275,11 +290,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
   arm.position.set(2.4, 0, 0);
   tip.add(cone, arm);
   tip.visible = false;
-  scene.add(tip);
+  pivot.add(tip);
   const band = new THREE.Mesh(new THREE.BoxGeometry(1, 0.06, 1),
     new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35 }));
   band.visible = false;
-  scene.add(band);
+  pivot.add(band);
   const readout = document.getElementById("readout");
   let scan = null;                                 // {t0, done}
 
@@ -301,7 +316,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
     const bits = bitsIn.value.replace(/[^01]/g, "") || "0";
     const seq = sequence(bits);
     const gap = parseFloat(gapIn.value);
-    if (group) scene.remove(group);
+    if (group) pivot.remove(group);
     group = new THREE.Group();
     const pts = patch(rings);
     const height = (seq.length - 1) * H * gap;
@@ -316,7 +331,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
         group.add(m);
       }
     });
-    scene.add(group);
+    pivot.add(group);
     span = Math.max(height, 2 * rings + 2);
     place();
     renderTape(bits, seq);
@@ -400,8 +415,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
     document.querySelectorAll("#views button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.view === v)));
     // Cantilever looks along -x, as the probe does: A, B and C sit at three places across the face.
     // Read stands a little off that line so the tip itself shows.
-    const V = { top: [0, 89], side: [90, 0], read: [62, 12], free: [40, 22] }[v];
-    orbit.az = V[0]; orbit.el = V[1]; orbit.zoom = 1;
+    const V = { top: [0, 90], side: [90, 0], read: [62, 12], free: [40, 22] }[v];
+    orbit.az = V[0]; orbit.el = V[1]; orbit.roll = 0; orbit.zoom = 1;
     orbit.spin = v === "free" && !reduced;
     place();
     if (v === "read") startScan(); else if (scan || tip.visible) stopScan();
