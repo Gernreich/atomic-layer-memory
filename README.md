@@ -58,8 +58,8 @@ crystal.
 
 Each base pair of DNA stores 2 bits, and base pairs sit 0.34 nm apart, so DNA takes
 about 0.17 nm per bit. That is denser along its length than the carbon stack at
-0.41 nm. But DNA cannot be read by running a tip along it, and the stack is a solid
-crystal.
+0.41 nm. But DNA is read by sequencing it, not by running a tip along it, and the
+stack is a solid crystal.
 
 ## Reading it from the side
 
