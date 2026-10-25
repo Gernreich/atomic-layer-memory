@@ -414,10 +414,13 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
   function setView(v) {
     document.querySelectorAll("#views button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.view === v)));
     // Cantilever looks along -x, as the probe does: A, B and C sit at three places across the face.
-    // Read stands a little off that line so the tip itself shows.
-    const V = { top: [0, 90], side: [90, 0], read: [62, 12], free: [40, 22] }[v];
-    orbit.az = V[0]; orbit.el = V[1]; orbit.roll = 0; orbit.zoom = 1;
-    orbit.spin = v === "free" && !reduced;
+    // Read keeps whatever view the stack is in, and only stops it spinning.
+    if (v === "read") orbit.spin = false;
+    else {
+      const V = { top: [0, 90], side: [90, 0], free: [40, 22] }[v];
+      orbit.az = V[0]; orbit.el = V[1]; orbit.roll = 0; orbit.zoom = 1;
+      orbit.spin = v === "free" && !reduced;
+    }
     place();
     if (v === "read") startScan(); else if (scan || tip.visible) stopScan();
   }
