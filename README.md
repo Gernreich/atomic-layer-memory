@@ -42,10 +42,6 @@ site. The page uses each element's own spacing, from its lattice constant a
 | silicon | 0.543 nm | 0.384 nm   | 0.314 nm  | 0.627 nm            |
 | carbon  | 0.357 nm | 0.252 nm   | 0.206 nm  | 0.412 nm            |
 
-Silicon carbide, a compound of the two, shows that stacking order can be grown on
-purpose: its polytypes (3C, 4H, 6H and many more) differ only in the order of
-their layers.
-
 ## Reading it from the side
 
 Seen from the cut side face, the three sites lie at three different positions
