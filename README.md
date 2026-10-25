@@ -52,7 +52,13 @@ seven of the drawing. Other ways of putting the density:
 | carbon  | 2,428       | 787 / 290 / 149                               |
 
 The volume figure assumes stacks of that size packed side by side through the
-crystal. For scale, DNA holds 2 bits per base pair, 0.34 nm apart: 0.17 nm per bit.
+crystal.
+
+## For scale, against DNA
+
+DNA stores 2 bits per base pair, 0.34 nm apart, so about 0.17 nm per bit. That is
+denser along its length than the carbon stack at 0.41 nm. But DNA cannot be read by
+running a tip along it, and the stack is a solid crystal.
 
 ## Reading it from the side
 
