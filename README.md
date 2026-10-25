@@ -56,9 +56,10 @@ crystal.
 
 ## For scale, against DNA
 
-DNA stores 2 bits per base pair, 0.34 nm apart, so about 0.17 nm per bit. That is
-denser along its length than the carbon stack at 0.41 nm. But DNA cannot be read by
-running a tip along it, and the stack is a solid crystal.
+Each base pair of DNA stores 2 bits, and base pairs sit 0.34 nm apart, so DNA takes
+about 0.17 nm per bit. That is denser along its length than the carbon stack at
+0.41 nm. But DNA cannot be read by running a tip along it, and the stack is a solid
+crystal.
 
 ## Reading it from the side
 
@@ -68,6 +69,15 @@ An atomic force microscope tip run up the stack meets each layer's row of atoms 
 one of those places, and the zig-zag it traces is the code.
 
 ## The 2009 drawing
+
+<table>
+<tr>
+<td align="center"><img src="images/atomic_i_2009.png" alt="The 2009 drawing: three hexagonal groups of seven textured circles, offset from one another, in black and white with the lines broken into dashes" width="270"></td>
+<td align="center"><img src="images/atomic_i_redrawn.png" alt="The same layout redrawn cleanly: chevron, fret and diamond textures, one per group of seven" width="270"></td>
+<td align="center"><img src="images/atomic_i_rgb.png" alt="The redraw in colour: red for 0, green for the spacer, blue for 1, with a key and the sequence 0 spacer 0 spacer 0 spacer 1 spacer 0" width="270"></td>
+</tr>
+<tr><td align="center">2009</td><td align="center">redrawn</td><td align="center">in colour</td></tr>
+</table>
 
 `images/atomic_i_2009.png` is the author's original drawing: three hexagonal groups
 of seven circles, offset from one another, in 1-bit black and white. It was a
