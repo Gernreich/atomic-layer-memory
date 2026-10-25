@@ -89,13 +89,13 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
   <header>
     <h1>Atomic Layer Memory</h1>
     <p class="back"><strong><a href="https://gernreich.github.io/">← All projects</a></strong></p>
-    <p>Bits written as the stacking order of close-packed atomic layers. Two outer positions carry 0 and 1, and a spacer layer sits between every bit. Drag to turn, scroll or pinch to zoom.</p>
+    <p>Bits written as the stacking order of close-packed atomic layers. Two outer positions carry 0 and 1, and a spacer layer sits between every bit. Drag the view, or use the Turn and Tilt sliders, to see it from any side.</p>
   </header>
 
   <div class="main">
     <div class="stage" id="stage">
       <canvas id="view" aria-label="3D view of the stacked atomic layers"></canvas>
-      <div class="hint" id="hint">drag to turn · scroll to zoom</div>
+      <div class="hint" id="hint">drag to turn · scroll or pinch to zoom</div>
     </div>
 
     <div class="panel">
@@ -107,11 +107,21 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
       <div class="field">
         <span class="label">View</span>
         <div class="seg" id="views">
-          <button type="button" data-view="free" aria-pressed="true">Turn</button>
+          <button type="button" data-view="free" aria-pressed="true">Spin</button>
           <button type="button" data-view="top" aria-pressed="false">Top</button>
-          <button type="button" data-view="side" aria-pressed="false">Side</button>
+          <button type="button" data-view="side" aria-pressed="false">Cantilever</button>
           <button type="button" data-view="read" aria-pressed="false">Read with AFM</button>
         </div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="turn">Turn, left to right <span id="turnv"></span></label>
+        <input type="range" id="turn" min="-180" max="180" step="1" value="40">
+      </div>
+
+      <div class="field">
+        <label class="label" for="tilt">Tilt <span id="tiltv"></span></label>
+        <input type="range" id="tilt" min="-89" max="89" step="1" value="22">
       </div>
 
       <div class="field">
@@ -169,7 +179,6 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script>
 (function () {
   const A_NM = 0.308, LAYER_NM = 0.252;            // SiC in-plane spacing, bilayer height
@@ -188,10 +197,56 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(35, 4 / 3, 0.1, 500);
-  const controls = new THREE.OrbitControls(camera, canvas);
-  controls.enableDamping = true;
-  controls.autoRotate = !matchMedia("(prefers-reduced-motion: reduce)").matches;
-  controls.autoRotateSpeed = 1.2;
+
+  // Orbit: the camera circles the stack. Turn (az) 0 looks from +z, 90 from +x where the
+  // cantilever is; tilt (el) 0 is level, 89 looks straight down.
+  const turnIn = document.getElementById("turn"), tiltIn = document.getElementById("tilt");
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const orbit = { az: 40, el: 22, zoom: 1, spin: !reduced };
+  function place() {
+    const d = (span * 2.6 + 4) * orbit.zoom;
+    const a = orbit.az * Math.PI / 180, e = orbit.el * Math.PI / 180;
+    camera.position.set(d * Math.cos(e) * Math.sin(a), d * Math.sin(e), d * Math.cos(e) * Math.cos(a));
+    camera.lookAt(0, 0, 0);
+    turnIn.value = Math.round(orbit.az);
+    tiltIn.value = Math.round(orbit.el);
+    document.getElementById("turnv").textContent = Math.round(orbit.az) + "°";
+    document.getElementById("tiltv").textContent = Math.round(orbit.el) + "°";
+  }
+  const wrapAz = a => ((a + 180) % 360 + 360) % 360 - 180;
+  const clampEl = e => Math.max(-89, Math.min(89, e));
+
+  const pointers = new Map();
+  let pinch0 = 0, zoom0 = 1;
+  canvas.addEventListener("pointerdown", e => {
+    canvas.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, [e.clientX, e.clientY]);
+    orbit.spin = false;
+    if (pointers.size === 2) { const [p, q] = [...pointers.values()]; pinch0 = Math.hypot(p[0] - q[0], p[1] - q[1]); zoom0 = orbit.zoom; }
+  });
+  canvas.addEventListener("pointermove", e => {
+    if (!pointers.has(e.pointerId)) return;
+    const [x0, y0] = pointers.get(e.pointerId);
+    pointers.set(e.pointerId, [e.clientX, e.clientY]);
+    if (pointers.size === 1) {
+      orbit.az = wrapAz(orbit.az - (e.clientX - x0) * 0.5);
+      orbit.el = clampEl(orbit.el + (e.clientY - y0) * 0.4);
+    } else if (pointers.size === 2 && pinch0) {
+      const [p, q] = [...pointers.values()];
+      orbit.zoom = Math.max(0.3, Math.min(3, zoom0 * pinch0 / Math.hypot(p[0] - q[0], p[1] - q[1])));
+    }
+    place();
+  });
+  const lift = e => { pointers.delete(e.pointerId); if (pointers.size < 2) pinch0 = 0; };
+  canvas.addEventListener("pointerup", lift);
+  canvas.addEventListener("pointercancel", lift);
+  canvas.addEventListener("wheel", e => {
+    e.preventDefault();
+    orbit.zoom = Math.max(0.3, Math.min(3, orbit.zoom * Math.exp(e.deltaY * 0.001)));
+    place();
+  }, { passive: false });
+  turnIn.addEventListener("input", () => { orbit.spin = false; orbit.az = +turnIn.value; place(); });
+  tiltIn.addEventListener("input", () => { orbit.spin = false; orbit.el = +tiltIn.value; place(); });
 
   scene.add(new THREE.HemisphereLight(0xffffff, 0x445066, 0.75));
   const sun = new THREE.DirectionalLight(0xffffff, 0.8);
@@ -263,7 +318,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
     });
     scene.add(group);
     span = Math.max(height, 2 * rings + 2);
-    controls.maxDistance = span * 6;
+    place();
     renderTape(bits, seq);
     renderStats(bits, seq, pts.length);
     if (view === "read") startScan();
@@ -343,15 +398,12 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
 
   function setView(v) {
     document.querySelectorAll("#views button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.view === v)));
-    const d = span * 2.6 + 4;
-    controls.target.set(0, 0, 0);
-    if (v === "top") { camera.up.set(0, 0, -1); camera.position.set(0, d, 0.001); controls.autoRotate = false; }
-    else if (v === "side" || v === "read") {      // look along -x: A, B and C sit at three places across the face
-      camera.up.set(0, 1, 0); camera.position.set(d, 0, 0); controls.autoRotate = false; }
-    else { camera.up.set(0, 1, 0); camera.position.set(d * 0.62, d * 0.38, d * 0.7);
-           controls.autoRotate = !matchMedia("(prefers-reduced-motion: reduce)").matches; }
-    camera.lookAt(0, 0, 0);
-    controls.update();
+    // Cantilever looks along -x, as the probe does: A, B and C sit at three places across the face.
+    // Read stands a little off that line so the tip itself shows.
+    const V = { top: [0, 89], side: [90, 0], read: [62, 12], free: [40, 22] }[v];
+    orbit.az = V[0]; orbit.el = V[1]; orbit.zoom = 1;
+    orbit.spin = v === "free" && !reduced;
+    place();
     if (v === "read") startScan(); else if (scan || tip.visible) stopScan();
   }
   let view = "free";
@@ -379,7 +431,6 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
     const b = e.target.closest("button"); if (!b) return;
     view = b.dataset.view; setView(view);
   });
-  controls.addEventListener("start", () => { controls.autoRotate = false; });
 
   const theme = () => { paint(); };
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", theme);
@@ -387,7 +438,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
   new ResizeObserver(resize).observe(stage);
 
   paint(); build(); resize(); setView(view);
-  (function loop(now) { requestAnimationFrame(loop); stepScan(now || 0); controls.update(); renderer.render(scene, camera); })();
+  (function loop(now) { requestAnimationFrame(loop); stepScan(now || 0);
+    if (orbit.spin) { orbit.az = wrapAz(orbit.az + 0.2); place(); }
+    renderer.render(scene, camera); })();
 })();
 </script>
 </body>
