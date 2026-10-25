@@ -2,8 +2,8 @@
 
 **[← All projects](https://gernreich.github.io/)**
 
-An idea for storing data at the atomic level, which the author had after reading
-K. Eric Drexler's work on nanotechnology. Atoms of one element, all silicon or
+An idea for storing data at the atomic level, which the author thought up after
+reading K. Eric Drexler's *Nanosystems*. Atoms of one element, all silicon or
 all carbon, are stacked in close-packed layers, and every layer sits on one of three
 sites, A, B or C.
 The two outer sites carry the bits and the middle one is a spacer laid between
