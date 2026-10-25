@@ -443,7 +443,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
     const b = e.target.closest("button"); if (!b) return;
     rings = +b.dataset.n;
     document.querySelectorAll("#sizes button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
-    build(); setView(view);
+    build();
   });
   document.getElementById("views").addEventListener("click", e => {
     const b = e.target.closest("button"); if (!b) return;
