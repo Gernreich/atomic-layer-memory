@@ -3,8 +3,9 @@
 **[← All projects](https://gernreich.github.io/)**
 
 An idea for storing data at the atomic level, which the author had after reading
-K. Eric Drexler's work on nanotechnology. Atoms such as carbon or silicon are
-stacked in close-packed layers, and every layer sits on one of three sites, A, B or C.
+K. Eric Drexler's work on nanotechnology. Atoms of one element, all silicon or
+all carbon, are stacked in close-packed layers, and every layer sits on one of three
+sites, A, B or C.
 The two outer sites carry the bits and the middle one is a spacer laid between
 every bit:
 
@@ -27,15 +28,23 @@ neighbouring layers can never sit on the same site. With B between every bit,
 every neighbouring pair is A–B or C–B, so any bit string is a stack that can
 physically exist: 00 becomes A B A, never A A.
 
-## Silicon and carbon
+## Silicon or carbon
 
-Silicon carbide already grows this way. Its Si–C bilayers sit on A, B or C
-sites, and its polytypes (3C, 4H, 6H and many more) differ only in their stacking
-order. The page uses SiC's spacings for its figures: 0.308 nm between neighbouring
-atoms in a layer and 0.252 nm per bilayer, so each bit with its spacer takes about
-half a nanometre of height. Pure silicon and pure diamond stack in a fixed A B C
-repeat, without a free choice per layer. Graphite usually stacks A B A B, but a
-rarer A B C form exists.
+Each stack is one element, silicon or carbon, never both. Both crystallise as
+diamond, in layers that sit on A, B or C sites. Left alone they repeat A B C, but
+a layer on another site, a stacking fault, is a known defect in both, and both
+have hexagonal forms stacked A B A B. Here every bit is a deliberate choice of
+site. The page uses each element's own spacing, from its lattice constant a
+(atoms in a layer a/√2 apart, layers a/√3):
+
+| element | a        | in a layer | per layer | per bit with spacer |
+|---------|----------|------------|-----------|---------------------|
+| silicon | 0.543 nm | 0.384 nm   | 0.314 nm  | 0.627 nm            |
+| carbon  | 0.357 nm | 0.252 nm   | 0.206 nm  | 0.412 nm            |
+
+Silicon carbide, a compound of the two, shows that stacking order can be grown on
+purpose: its polytypes (3C, 4H, 6H and many more) differ only in the order of
+their layers.
 
 ## Reading it from the side
 

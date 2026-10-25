@@ -135,6 +135,14 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
       </div>
 
       <div class="field">
+        <span class="label">Element, one per stack</span>
+        <div class="seg" id="elements">
+          <button type="button" data-el="Si" aria-pressed="true">Silicon</button>
+          <button type="button" data-el="C" aria-pressed="false">Carbon</button>
+        </div>
+      </div>
+
+      <div class="field">
         <span class="label">Atoms per layer</span>
         <div class="seg" id="sizes">
           <button type="button" data-n="1" aria-pressed="true">7</button>
@@ -169,8 +177,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
       <p>A close-packed layer has to nest in the hollows of the layer below, so two neighbouring layers can never sit on the same site. With B between every bit, 0 = A and 1 = C, and any bit string is an allowed stack: 00 becomes A B A, never A A.</p>
     </section>
     <section>
-      <h2>Silicon and carbon</h2>
-      <p>Silicon carbide already grows this way. Its Si–C bilayers sit on A, B or C sites, and its many polytypes (3C, 4H, 6H) differ only in stacking order. The figures in the panel use SiC's spacings: 0.308 nm between neighbouring atoms in a layer, and 0.252 nm per bilayer.</p>
+      <h2>Silicon or carbon</h2>
+      <p>Each stack is one element, all silicon or all carbon. Both crystallise as diamond, in layers that sit on A, B or C sites. Left alone they repeat A B C, but a layer on another site, a stacking fault, is a known defect in both, and both have hexagonal forms stacked A B A B. Here every bit is a deliberate choice of site. The panel's figures use each element's own spacing: silicon 0.384 nm between atoms in a layer and 0.314 nm per layer, diamond 0.252 nm and 0.206 nm.</p>
     </section>
     <section>
       <h2>Reading from the side</h2>
@@ -186,7 +194,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function () {
-  const A_NM = 0.308, LAYER_NM = 0.252;            // SiC in-plane spacing, bilayer height
+  // One element per stack. Diamond-cubic lattice constant a: atoms in a layer are a/√2 apart, layers a/√3.
+  const ELEMENT = { Si: 0.5431, C: 0.3567 };       // nm: silicon, diamond
+  let element = "Si";
   const H = Math.sqrt(2 / 3);                      // close-packed layer height, in units of atom spacing
   const SITE = { A: [0, 0], B: [0.5, Math.sqrt(3) / 6], C: [1, Math.sqrt(3) / 3] };
   const ROLE = { A: "zero", B: "spacer", C: "one" };
@@ -394,7 +404,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
   }
 
   function renderStats(bits, seq, perLayer) {
+    const A_NM = ELEMENT[element] / Math.SQRT2, LAYER_NM = ELEMENT[element] / Math.sqrt(3);
     const rows = [
+      ["element", element === "Si" ? "silicon" : "carbon"],
       ["bits", bits.length],
       ["layers", seq.length],
       ["atoms", seq.length * perLayer],
@@ -443,6 +455,12 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); out
     const b = e.target.closest("button"); if (!b) return;
     rings = +b.dataset.n;
     document.querySelectorAll("#sizes button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    build();
+  });
+  document.getElementById("elements").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    element = b.dataset.el;
+    document.querySelectorAll("#elements button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
     build();
   });
   document.getElementById("views").addEventListener("click", e => {
