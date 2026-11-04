@@ -103,3 +103,7 @@ The tools need Python 3 with Pillow and numpy:
 ## License
 
 CC0 1.0 Universal; see `LICENSE`.
+
+## Credits
+
+The idea is Michael Gernreich's; [Claude](https://www.anthropic.com/claude) (Anthropic), working in Claude Code, co-wrote the code and the documentation that present it. Commits Claude made carry a `Co-Authored-By: Claude` line.
